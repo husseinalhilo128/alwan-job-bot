@@ -74,12 +74,48 @@ def is_super_admin(user_id):
     return user_id in SUPER_ADMIN_IDS
 
 
+def admin_keyboard():
+    return ReplyKeyboardMarkup(
+        [
+            ["📋 كل المتقدمين"],
+            ["👨 الذكور", "👩 الإناث"],
+            ["⭐ التقييمات"],
+            ["⏰ المتفرغين"],
+            ["🎥 الظهور الإعلامي"],
+            ["🗑 حذف البيانات"],
+        ],
+        resize_keyboard=True,
+    )
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+
+    if is_admin(user_id):
+        await update.message.reply_text(
+            "مرحبا أدمن\nهذه لوحة التحكم الخاصة بالتقديمات",
+            reply_markup=admin_keyboard(),
+        )
+        return ConversationHandler.END
+
     context.user_data.clear()
+
     await update.message.reply_text(
         "مرحبا بك في التقديم على وظائف شركة الوان كربلاء\n\nيرجى كتابة الاسم الكامل",
         reply_markup=ReplyKeyboardRemove(),
     )
+
+    return FULL_NAME
+
+
+async def apply(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
+
+    await update.message.reply_text(
+        "تم بدء طلب تقديم جديد\n\nيرجى كتابة الاسم الكامل",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
     return FULL_NAME
 
 
@@ -168,6 +204,7 @@ async def salary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["salary"] = update.message.text.strip()
 
     button = KeyboardButton("إرسال رقم الهاتف", request_contact=True)
+
     await update.message.reply_text(
         "أرسل رقم الهاتف",
         reply_markup=ReplyKeyboardMarkup([[button]], resize_keyboard=True, one_time_keyboard=True),
@@ -242,17 +279,24 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         InlineKeyboardButton("⭐⭐⭐", callback_data=f"rate_3_{application_id}"),
     ]]
 
+    sent_count = 0
+
     for admin_id in ADMIN_IDS:
-        await context.bot.send_photo(
-            chat_id=admin_id,
-            photo=photo_file,
-            caption=text,
-            reply_markup=InlineKeyboardMarkup(keyboard),
-        )
+        try:
+            await context.bot.send_photo(
+                chat_id=admin_id,
+                photo=photo_file,
+                caption=text,
+                reply_markup=InlineKeyboardMarkup(keyboard),
+            )
+            sent_count += 1
+        except Exception as e:
+            print(f"Failed to send application to admin {admin_id}: {e}")
 
     await update.message.reply_text("تم إرسال طلبك بنجاح")
-    context.user_data.clear()
+    print(f"Application {application_id} saved. Sent to {sent_count} admins.")
 
+    context.user_data.clear()
     return ConversationHandler.END
 
 
@@ -287,18 +331,9 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_admin(update.effective_user.id):
         return
 
-    keyboard = [
-        ["📋 كل المتقدمين"],
-        ["👨 الذكور", "👩 الإناث"],
-        ["⭐ التقييمات"],
-        ["⏰ المتفرغين"],
-        ["🎥 الظهور الإعلامي"],
-        ["🗑 حذف البيانات"],
-    ]
-
     await update.message.reply_text(
         "لوحة الأدمن",
-        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
+        reply_markup=admin_keyboard(),
     )
 
 
@@ -359,6 +394,7 @@ async def filters_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     result = ""
+
     for row in rows:
         result += (
             f"رقم: {row[0]}\n"
@@ -414,7 +450,10 @@ def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
+        entry_points=[
+            CommandHandler("start", start),
+            CommandHandler("apply", apply),
+        ],
         states={
             FULL_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, full_name)],
             BIRTH: [MessageHandler(filters.TEXT & ~filters.COMMAND, birth)],
