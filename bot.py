@@ -20,13 +20,8 @@ from telegram.ext import (
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-ADMIN_IDS = [
-    int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x
-]
-
-SUPER_ADMIN_IDS = [
-    int(x) for x in os.getenv("SUPER_ADMIN_IDS", "").split(",") if x
-]
+ADMIN_IDS = [int(x.strip()) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()]
+SUPER_ADMIN_IDS = [int(x.strip()) for x in os.getenv("SUPER_ADMIN_IDS", "").split(",") if x.strip()]
 
 DB_NAME = "jobs.db"
 
@@ -81,169 +76,120 @@ def is_super_admin(user_id):
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
-
     await update.message.reply_text(
         "مرحبا بك في التقديم على وظائف شركة الوان كربلاء\n\nيرجى كتابة الاسم الكامل",
         reply_markup=ReplyKeyboardRemove(),
     )
-
     return FULL_NAME
 
 
 async def full_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["full_name"] = update.message.text
-
-    await update.message.reply_text(
-        "اكتب تاريخ الميلاد\nمثال:\n2001/5/10"
-    )
-
+    context.user_data["full_name"] = update.message.text.strip()
+    await update.message.reply_text("اكتب تاريخ الميلاد\nمثال:\n2001/5/10")
     return BIRTH
 
 
 async def birth(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["birth"] = update.message.text
+    context.user_data["birth"] = update.message.text.strip()
 
     keyboard = [["ذكر", "أنثى"]]
-
     await update.message.reply_text(
         "اختر الجنس",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard,
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        ),
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True),
     )
-
     return GENDER
 
 
 async def gender(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["gender"] = update.message.text
+    context.user_data["gender"] = update.message.text.strip()
 
     keyboard = [["خريج", "طالب", "تارك"]]
-
     await update.message.reply_text(
         "الحالة الدراسية",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard,
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        ),
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True),
     )
-
     return STUDY
 
 
 async def study(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["study"] = update.message.text
+    context.user_data["study"] = update.message.text.strip()
 
     keyboard = [["نعم", "لا"]]
-
     await update.message.reply_text(
         "هل لديك خبرة عمل؟",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard,
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        ),
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True),
     )
-
     return EXPERIENCE
 
 
 async def experience(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["experience"] = update.message.text
+    context.user_data["experience"] = update.message.text.strip()
 
     await update.message.reply_text(
         "اذكر اللغات التي تتحدث بها",
         reply_markup=ReplyKeyboardRemove(),
     )
-
     return LANGUAGES
 
 
 async def languages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["languages"] = update.message.text
+    context.user_data["languages"] = update.message.text.strip()
 
     keyboard = [["نعم", "لا"]]
-
     await update.message.reply_text(
         "هل أنت متفرغ للعمل؟",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard,
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        ),
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True),
     )
-
     return AVAILABLE
 
 
 async def available(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["available"] = update.message.text
+    context.user_data["available"] = update.message.text.strip()
 
     keyboard = [["نعم", "لا"]]
-
     await update.message.reply_text(
         "هل تستطيع الظهور إعلاميا في صفحات الشركة؟",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard,
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        ),
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True),
     )
-
     return MEDIA
 
 
 async def media(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["media"] = update.message.text
+    context.user_data["media"] = update.message.text.strip()
 
     await update.message.reply_text(
         "ما الراتب المتوقع؟",
         reply_markup=ReplyKeyboardRemove(),
     )
-
     return SALARY
 
 
 async def salary(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data["salary"] = update.message.text
+    context.user_data["salary"] = update.message.text.strip()
 
-    button = KeyboardButton(
-        "إرسال رقم الهاتف",
-        request_contact=True,
-    )
-
+    button = KeyboardButton("إرسال رقم الهاتف", request_contact=True)
     await update.message.reply_text(
         "أرسل رقم الهاتف",
-        reply_markup=ReplyKeyboardMarkup(
-            [[button]],
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        ),
+        reply_markup=ReplyKeyboardMarkup([[button]], resize_keyboard=True, one_time_keyboard=True),
     )
-
     return PHONE
 
 
 async def phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if update.message.contact:
         context.user_data["phone"] = update.message.contact.phone_number
     else:
-        context.user_data["phone"] = update.message.text
+        context.user_data["phone"] = update.message.text.strip()
 
     await update.message.reply_text(
         "أرسل صورة شخصية",
         reply_markup=ReplyKeyboardRemove(),
     )
-
     return PHOTO
-  async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+
+async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     photo_file = update.message.photo[-1].file_id
-
     data = context.user_data
 
     conn = sqlite3.connect(DB_NAME)
@@ -251,17 +197,8 @@ async def phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     cur.execute("""
     INSERT INTO applications (
-        full_name,
-        birth,
-        gender,
-        study,
-        experience,
-        languages,
-        available,
-        media,
-        salary,
-        phone,
-        photo
+        full_name, birth, gender, study, experience,
+        languages, available, media, salary, phone, photo
     )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
@@ -279,7 +216,6 @@ async def phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ))
 
     application_id = cur.lastrowid
-
     conn.commit()
     conn.close()
 
@@ -300,72 +236,59 @@ async def phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
 الهاتف: {data['phone']}
 """
 
-    keyboard = [
-        [
-            InlineKeyboardButton("⭐", callback_data=f"rate_1_{application_id}"),
-            InlineKeyboardButton("⭐⭐", callback_data=f"rate_2_{application_id}"),
-            InlineKeyboardButton("⭐⭐⭐", callback_data=f"rate_3_{application_id}"),
-        ]
-    ]
-
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    keyboard = [[
+        InlineKeyboardButton("⭐", callback_data=f"rate_1_{application_id}"),
+        InlineKeyboardButton("⭐⭐", callback_data=f"rate_2_{application_id}"),
+        InlineKeyboardButton("⭐⭐⭐", callback_data=f"rate_3_{application_id}"),
+    ]]
 
     for admin_id in ADMIN_IDS:
         await context.bot.send_photo(
             chat_id=admin_id,
             photo=photo_file,
             caption=text,
-            reply_markup=reply_markup,
+            reply_markup=InlineKeyboardMarkup(keyboard),
         )
 
-    await update.message.reply_text(
-        "تم إرسال طلبك بنجاح"
-    )
+    await update.message.reply_text("تم إرسال طلبك بنجاح")
+    context.user_data.clear()
 
     return ConversationHandler.END
 
 
 async def rate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     query = update.callback_query
-
     await query.answer()
 
-    user_id = query.from_user.id
-
-    if not is_admin(user_id):
+    if not is_admin(query.from_user.id):
         return
 
-    data = query.data.split("_")
-
-    stars = data[1]
-    application_id = data[2]
+    parts = query.data.split("_")
+    stars = parts[1]
+    application_id = parts[2]
 
     rating = "⭐" * int(stars)
 
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
-    cur.execute("""
-    UPDATE applications
-    SET rating = ?
-    WHERE id = ?
-    """, (rating, application_id))
+    cur.execute(
+        "UPDATE applications SET rating = ? WHERE id = ?",
+        (rating, application_id),
+    )
 
     conn.commit()
     conn.close()
 
-    await query.message.reply_text(
-        f"تم تقييم المتقدم: {rating}"
-    )
+    await query.message.reply_text(f"تم تقييم المتقدم: {rating}")
 
 
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if not is_admin(update.effective_user.id):
         return
 
     keyboard = [
+        ["📋 كل المتقدمين"],
         ["👨 الذكور", "👩 الإناث"],
         ["⭐ التقييمات"],
         ["⏰ المتفرغين"],
@@ -375,48 +298,52 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "لوحة الأدمن",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard,
-            resize_keyboard=True,
-        ),
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True),
     )
 
 
 async def filters_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     if not is_admin(update.effective_user.id):
         return
 
-    text = update.message.text
+    text = update.message.text.strip()
 
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
 
-    if text == "👨 الذكور":
-        cur.execute("SELECT full_name, rating FROM applications WHERE gender='ذكر'")
+    if text == "📋 كل المتقدمين":
+        cur.execute("SELECT id, full_name, gender, available, media, rating FROM applications")
+
+    elif text == "👨 الذكور":
+        cur.execute("SELECT id, full_name, gender, available, media, rating FROM applications WHERE gender='ذكر'")
 
     elif text == "👩 الإناث":
-        cur.execute("SELECT full_name, rating FROM applications WHERE gender='أنثى'")
+        cur.execute("SELECT id, full_name, gender, available, media, rating FROM applications WHERE gender='أنثى'")
 
     elif text == "⏰ المتفرغين":
-        cur.execute("SELECT full_name, rating FROM applications WHERE available='نعم'")
+        cur.execute("SELECT id, full_name, gender, available, media, rating FROM applications WHERE available='نعم'")
 
     elif text == "🎥 الظهور الإعلامي":
-        cur.execute("SELECT full_name, rating FROM applications WHERE media='نعم'")
+        cur.execute("SELECT id, full_name, gender, available, media, rating FROM applications WHERE media='نعم'")
 
     elif text == "⭐ التقييمات":
-        cur.execute("SELECT full_name, rating FROM applications")
+        cur.execute("SELECT id, full_name, gender, available, media, rating FROM applications WHERE rating!='بدون تقييم'")
 
     elif text == "🗑 حذف البيانات":
-
         if not is_super_admin(update.effective_user.id):
             await update.message.reply_text("هذا الأمر للسوبر أدمن فقط")
+            conn.close()
             return
 
-        cur.execute("DELETE FROM applications")
-        conn.commit()
+        keyboard = [[
+            InlineKeyboardButton("✅ نعم، احذف الكل", callback_data="delete_all_confirm"),
+            InlineKeyboardButton("❌ إلغاء", callback_data="delete_all_cancel"),
+        ]]
 
-        await update.message.reply_text("تم حذف جميع البيانات")
+        await update.message.reply_text(
+            "هل أنت متأكد من حذف جميع بيانات المتقدمين؟",
+            reply_markup=InlineKeyboardMarkup(keyboard),
+        )
         conn.close()
         return
 
@@ -425,7 +352,6 @@ async def filters_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     rows = cur.fetchall()
-
     conn.close()
 
     if not rows:
@@ -433,15 +359,42 @@ async def filters_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     result = ""
-
     for row in rows:
-        result += f"{row[0]} - {row[1]}\n"
+        result += (
+            f"رقم: {row[0]}\n"
+            f"الاسم: {row[1]}\n"
+            f"الجنس: {row[2]}\n"
+            f"متفرغ: {row[3]}\n"
+            f"ظهور إعلامي: {row[4]}\n"
+            f"التقييم: {row[5]}\n"
+            f"--------------------\n"
+        )
 
     await update.message.reply_text(result)
 
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def delete_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
 
+    if not is_super_admin(query.from_user.id):
+        return
+
+    if query.data == "delete_all_cancel":
+        await query.message.reply_text("تم إلغاء الحذف")
+        return
+
+    if query.data == "delete_all_confirm":
+        conn = sqlite3.connect(DB_NAME)
+        cur = conn.cursor()
+        cur.execute("DELETE FROM applications")
+        conn.commit()
+        conn.close()
+
+        await query.message.reply_text("تم حذف جميع البيانات")
+
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
 
     await update.message.reply_text(
@@ -453,6 +406,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
+    if not BOT_TOKEN:
+        raise ValueError("BOT_TOKEN غير موجود داخل Railway Variables")
 
     init_db()
 
@@ -480,17 +435,12 @@ def main():
     )
 
     app.add_handler(conv_handler)
-
     app.add_handler(CommandHandler("admin", admin))
-
-    app.add_handler(CallbackQueryHandler(rate_callback))
-
-    app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, filters_handler)
-    )
+    app.add_handler(CallbackQueryHandler(rate_callback, pattern="^rate_"))
+    app.add_handler(CallbackQueryHandler(delete_callback, pattern="^delete_all_"))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, filters_handler))
 
     print("Bot Running...")
-
     app.run_polling()
 
 
